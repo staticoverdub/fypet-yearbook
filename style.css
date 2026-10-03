@@ -1,0 +1,58 @@
+/* FYPet yearbook (SPEC 12.4): pixel-art feel, light and dark mode, phone-first. */
+:root {
+  color-scheme: light dark;
+  --bg: #f3efe6; --card: #fffdf8; --ink: #2e222f; --muted: #6b5f6e; --line: #d9d0c3;
+  --accent: #4d9be6; --gold: #f9c22b; --alive: #1ebc73; --egg: #f79617; --gone: #9babb2;
+  --font: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1d1820; --card: #2e222f; --ink: #f3efe6; --muted: #b3a7b5; --line: #4a3d4c; --gone: #7f708a; }
+}
+* { box-sizing: border-box; }
+body { font-family: var(--font); background: var(--bg); color: var(--ink); margin: 0; padding: 0 16px 48px; line-height: 1.45; }
+main { max-width: 56rem; margin: 0 auto; }
+a { color: var(--accent); }
+canvas, img { image-rendering: pixelated; image-rendering: crisp-edges; }
+h1, h2, h3 { line-height: 1.2; }
+.banner { position: relative; margin: 0 -16px 1rem; overflow: hidden; background: #8fd3ff; }
+.banner img { display: block; width: 100%; height: auto; min-height: 96px; object-fit: cover; object-position: right; }
+.banner .title { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #fff;
+  text-shadow: 2px 2px 0 #2e222f; }
+.banner .title h1 { margin: 0; font-size: clamp(1.4rem, 5vw, 2.2rem); }
+.banner .title p { margin: .2rem 0 0; font-size: .85rem; }
+.banner.plain { padding: 1.2rem 16px; background: var(--card); border-bottom: 1px solid var(--line); }
+.banner.plain .title { position: static; transform: none; color: var(--ink); text-shadow: none; }
+.devnote { background: var(--egg); color: #2e222f; padding: .4rem .8rem; border-radius: 6px; font-size: .8rem; margin: 0 0 1rem; }
+.dynasty { margin: 1.5rem 0 2.5rem; }
+.dynasty h2 { margin: 0 0 .2rem; }
+.dynasty .sub { color: var(--muted); margin: 0 0 1rem; font-size: .85rem; }
+.tree { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: .8rem; }
+.card { background: var(--card); border: 2px solid var(--line); border-radius: 8px; padding: .7rem; text-decoration: none; color: inherit; display: block; }
+.card:hover { border-color: var(--accent); }
+.card canvas { display: block; margin: 0 auto .4rem; width: 128px; height: 128px; }
+.card .name { font-weight: bold; }
+.card .meta { color: var(--muted); font-size: .8rem; }
+.pill { display: inline-block; font-size: .7rem; padding: .05rem .45rem; border-radius: 99px; color: #2e222f; font-weight: bold; }
+.pill.alive { background: var(--alive); } .pill.egg { background: var(--egg); } .pill.deceased { background: var(--gone); }
+.hero { max-width: 40rem; margin: 0 auto; position: relative; border-radius: 8px; overflow: hidden; border: 2px solid var(--line); background: #8fd3ff; }
+.hero canvas { display: block; width: 100%; height: auto; }
+.hero .tomb { position: absolute; left: 8px; top: 8px; width: 48px; }
+.row { max-width: 40rem; margin-left: auto; margin-right: auto; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin: .8rem 0; }
+.row label { color: var(--muted); font-size: .85rem; min-width: 8.5rem; }
+input[type=range] { flex: 1; min-width: 10rem; accent-color: var(--accent); }
+section { margin: 1.6rem 0; }
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .3rem 1.2rem; margin: 0; }
+.stats div { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--line); padding: .15rem 0; }
+.stats dt { color: var(--muted); } .stats dd { margin: 0; font-weight: bold; }
+.timeline { list-style: none; padding: 0; margin: 0; border-left: 3px solid var(--line); }
+.timeline li { padding: .25rem 0 .25rem .9rem; position: relative; }
+.timeline li::before { content: ""; position: absolute; left: -7px; top: .65rem; width: 9px; height: 9px; background: var(--gold); border: 2px solid var(--ink); }
+.timeline .when { color: var(--muted); font-size: .8rem; margin-left: .4rem; }
+.obit { background: var(--card); border: 2px solid var(--line); border-radius: 8px; padding: 1rem; }
+.obit p { margin: 0 0 .6rem; }
+.capsule { font-style: italic; color: var(--muted); }
+.diary { list-style: none; padding: 0; margin: 0; font-size: .9rem; }
+.diary li { padding: .2rem 0; border-bottom: 1px dotted var(--line); }
+.diary .d { color: var(--muted); margin-right: .6rem; }
+.empty { color: var(--muted); font-style: italic; }
+footer { margin-top: 3rem; color: var(--muted); font-size: .75rem; text-align: center; }

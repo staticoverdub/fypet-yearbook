@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FYPet Control</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .ctl { max-width: 30rem; margin: 0 auto; }
+    .ctl h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
+    .ctl .sub { opacity: .7; margin: 0 0 1rem; font-size: .85rem; }
+    .ctl button { font: inherit; padding: .7rem 1rem; margin: .25rem 0; width: 100%; border-radius: 6px;
+                  border: 1px solid currentColor; background: transparent; color: inherit; cursor: pointer; }
+    .ctl button.primary { background: #4d9be6; color: #fff; border-color: #4d9be6; }
+    .ctl button:disabled { opacity: .4; cursor: default; }
+    .ctl .card { border: 1px solid rgba(128,128,128,.4); border-radius: 8px; padding: .75rem 1rem; margin: .75rem 0; }
+    .ctl dl { display: grid; grid-template-columns: auto 1fr; gap: .2rem .8rem; margin: 0; }
+    .ctl dt { opacity: .7; }
+    .ctl dd { margin: 0; }
+    .ctl .row { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+    .ctl #log { font-size: .8rem; white-space: pre-wrap; opacity: .8; max-height: 10rem; overflow: auto; }
+    .ctl .warn { color: #e83b3b; }
+  </style>
+</head>
+<body>
+<main class="ctl">
+  <h1>FYPet Control</h1>
+  <p class="sub">Bluetooth control for the desk pet. Chrome on desktop or Android; on iPhone use the Bluefy browser.</p>
+
+  <p id="unsupported" class="warn" hidden>This browser has no Web Bluetooth. Try Chrome (desktop or Android) or Bluefy (iPhone).</p>
+
+  <button id="connect" class="primary">Connect</button>
+  <button id="disconnect" hidden>Disconnect</button>
+
+  <div class="card" id="statusCard" hidden>
+    <dl>
+      <dt>Name</dt><dd id="sName">-</dd>
+      <dt>Stage</dt><dd id="sStage">-</dd>
+      <dt>Mood</dt><dd id="sMood">-</dd>
+      <dt>FY day</dt><dd id="sDay">-</dd>
+      <dt>Next</dt><dd id="sNext">-</dd>
+      <dt>Doing</dt><dd id="sAction">-</dd>
+    </dl>
+  </div>
+
+  <div id="controls" hidden>
+    <div class="card">
+      <button id="syncTime">Sync time from this phone</button>
+      <p class="sub">The pet accepts phone time only if its clock is unset or within 10 minutes. The first write asks for the 6-digit passkey.</p>
+    </div>
+    <div class="card">
+      <button id="cr">Continuing resolution</button>
+      <div class="row">
+        <button id="shutdownStart">Shutdown begins</button>
+        <button id="shutdownEnd">Funding restored</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card"><div id="log">Not connected.</div></div>
+</main>
+<script>
+"use strict";
+// UUIDs: docs/BLE.md (CONTRACT).
+const SERVICE = "bd0490d8-3bd8-4e27-ae9f-3c52d85b3ac8";
+const TIME = "85c143d8-ba1a-4c02-b77c-3c88f24ef206";
+const STATUS = "53bd088a-7506-4d47-8877-1266e088d0e4";
+const COMMAND = "c8d02915-ef87-46a5-8142-e05728e73d6f";
+
+const $ = (id) => document.getElementById(id);
+const enc = new TextEncoder(), dec = new TextDecoder();
+let device = null, chars = {}, armed = null;
+
+function log(msg) {
+  const t = new Date().toLocaleTimeString();
+  const el = $("log");
+  el.textContent = (el.textContent === "Not connected." ? "" : el.textContent + "\n") + `${t}  ${msg}`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function showStatus(text) {
+  let s;
+  try { s = JSON.parse(text); } catch { log(`status: ${text}`); return; }
+  $("sName").textContent = s.name || "-";
+  $("sStage").textContent = s.stage || "-";
+  $("sMood").textContent = s.mood ?? "-";
+  $("sDay").textContent = s.fy_day ?? "-";
+  $("sNext").textContent = s.next_milestone ? `${s.next_milestone.id.replace(/_/g, " ")} (${s.next_milestone.on})` : "-";
+  $("sAction").textContent = (s.action || "-").replace(/_/g, " ");
+}
+
+function setConnected(on) {
+  $("connect").hidden = on;
+  $("disconnect").hidden = !on;
+  $("statusCard").hidden = !on;
+  $("controls").hidden = !on || !chars.command;
+}
+
+async function connect() {
+  try {
+    device = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: "FYPet-" }, { services: [SERVICE] }], optionalServices: [SERVICE] });
+    device.addEventListener("gattserverdisconnected", () => { log("disconnected"); chars = {}; setConnected(false); });
+    log(`connecting to ${device.name}...`);
+    const server = await device.gatt.connect();
+    const svc = await server.getPrimaryService(SERVICE);
+    chars = {};
+    for (const [k, u] of Object.entries({ time: TIME, status: STATUS, command: COMMAND })) {
+      try { chars[k] = await svc.getCharacteristic(u); } catch { /* status-only boards have no time/command */ }
+    }
+    if (!chars.status) throw new Error("no status characteristic");
+    showStatus(dec.decode(await chars.status.readValue()));
+    await chars.status.startNotifications();
+    chars.status.addEventListener("characteristicvaluechanged", (e) => showStatus(dec.decode(e.target.value)));
+    log(chars.command ? "connected" : "connected (status only: this board has no passkey set)");
+    setConnected(true);
+  } catch (e) {
+    log(`connect failed: ${e.message}`);
+  }
+}
+
+async function write(kind, text, label) {
+  if (!chars[kind]) return;
+  try {
+    await chars[kind].writeValueWithResponse(enc.encode(text));
+    log(`${label}: sent`);
+  } catch (e) {
+    log(`${label}: ${e.message} (pairing refused or passkey wrong?)`);
+  }
+}
+
+// Shutdowns change the pet's whole day: ask for a second tap within 4 s.
+function confirmTap(btn, label, fn) {
+  if (armed === btn) { armed = null; btn.textContent = label; fn(); return; }
+  if (armed) armed.textContent = armed.dataset.label;
+  armed = btn;
+  btn.dataset.label = label;
+  btn.textContent = "Tap again to confirm";
+  setTimeout(() => { if (armed === btn) { armed = null; btn.textContent = label; } }, 4000);
+}
+
+if (!navigator.bluetooth) { $("unsupported").hidden = false; $("connect").disabled = true; }
+$("connect").onclick = connect;
+$("disconnect").onclick = () => device && device.gatt.connected && device.gatt.disconnect();
+$("syncTime").onclick = () => write("time", String(Math.floor(Date.now() / 1000)), "time sync");
+$("cr").onclick = () => write("command", "event:cr", "continuing resolution");
+$("shutdownStart").onclick = (e) => confirmTap(e.target, "Shutdown begins", () => write("command", "event:shutdown_start", "shutdown"));
+$("shutdownEnd").onclick = (e) => confirmTap(e.target, "Funding restored", () => write("command", "event:shutdown_end", "funding restored"));
+</script>
+</body>
+</html>
