@@ -20,6 +20,9 @@
     .ctl .row { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
     .ctl #log { font-size: .8rem; white-space: pre-wrap; opacity: .8; max-height: 10rem; overflow: auto; }
     .ctl .warn { color: #e83b3b; }
+    .ctl label { display: block; font-size: .85rem; opacity: .8; margin: .5rem 0 .2rem; }
+    .ctl input { font: inherit; width: 100%; box-sizing: border-box; padding: .6rem .7rem; border-radius: 6px;
+                 border: 1px solid rgba(128,128,128,.6); background: transparent; color: inherit; }
   </style>
 </head>
 <body>
@@ -40,6 +43,7 @@
       <dt>FY day</dt><dd id="sDay">-</dd>
       <dt>Next</dt><dd id="sNext">-</dd>
       <dt>Doing</dt><dd id="sAction">-</dd>
+      <dt>Wi-Fi</dt><dd id="sWifi">-</dd>
     </dl>
   </div>
 
@@ -47,6 +51,21 @@
     <div class="card">
       <button id="syncTime">Sync time from this phone</button>
       <p class="sub">The pet accepts phone time only if its clock is unset or within 10 minutes. The first write asks for the 6-digit passkey.</p>
+    </div>
+    <div class="card">
+      <strong>Wi-Fi network</strong>
+      <p class="sub">Moving desks or offices? Give the pet its new 2.4 GHz network. It is sent over the paired,
+        encrypted link, tried before the built-in networks, and never shown again.</p>
+      <label for="wifiSsid">Network name (SSID)</label>
+      <input id="wifiSsid" autocomplete="off" maxlength="32" spellcheck="false">
+      <label for="wifiPass">Password (leave empty for an open network)</label>
+      <input id="wifiPass" type="password" autocomplete="new-password" maxlength="63">
+      <div class="row">
+        <button id="wifiSave">Save network</button>
+        <button id="wifiForget">Forget saved network</button>
+      </div>
+      <p class="sub">After saving, the pet tries it within a few seconds and Bluetooth drops for up to a minute.
+        Reconnect and check "Wi-Fi" above.</p>
     </div>
     <div class="card">
       <button id="cr">Continuing resolution</button>
@@ -87,6 +106,7 @@ function showStatus(text) {
   $("sDay").textContent = s.fy_day ?? "-";
   $("sNext").textContent = s.next_milestone ? `${s.next_milestone.id.replace(/_/g, " ")} (${s.next_milestone.on})` : "-";
   $("sAction").textContent = (s.action || "-").replace(/_/g, " ");
+  $("sWifi").textContent = ({ connected: "connected", no_network: "could not connect", not_tried: "not tried yet" })[s.wifi] || "-";
 }
 
 function setConnected(on) {
@@ -143,6 +163,16 @@ $("connect").onclick = connect;
 $("disconnect").onclick = () => device && device.gatt.connected && device.gatt.disconnect();
 $("syncTime").onclick = () => write("time", String(Math.floor(Date.now() / 1000)), "time sync");
 $("cr").onclick = () => write("command", "event:cr", "continuing resolution");
+$("wifiSave").onclick = (e) => {
+  const ssid = $("wifiSsid").value, pass = $("wifiPass").value;
+  if (!ssid || ssid.length > 32) { log("wifi: enter a network name (up to 32 characters)"); return; }
+  if (pass && (pass.length < 8 || pass.length > 63 || /[^\x20-\x7e]/.test(pass))) { log("wifi: passwords are 8-63 plain characters (or empty for an open network)"); return; }
+  confirmTap(e.target, "Save network", async () => {
+    await write("command", `wifi:set\n${ssid}\n${pass}`, `wifi network "${ssid}"`);
+    $("wifiPass").value = "";
+  });
+};
+$("wifiForget").onclick = (e) => confirmTap(e.target, "Forget saved network", () => write("command", "wifi:forget", "forget wifi"));
 $("shutdownStart").onclick = (e) => confirmTap(e.target, "Shutdown begins", () => write("command", "event:shutdown_start", "shutdown"));
 $("shutdownEnd").onclick = (e) => confirmTap(e.target, "Funding restored", () => write("command", "event:shutdown_end", "funding restored"));
 </script>
