@@ -68,6 +68,10 @@
         Reconnect and check "Wi-Fi" above.</p>
     </div>
     <div class="card">
+      <button id="demo" class="primary">Show off (90-second demo)</button>
+      <p class="sub">Plays a quick tour of seasons, costumes and visitors on the screen. The pet itself is not affected.</p>
+    </div>
+    <div class="card">
       <button id="cr">Continuing resolution</button>
       <div class="row">
         <button id="shutdownStart">Shutdown begins</button>
@@ -163,6 +167,7 @@ $("connect").onclick = connect;
 $("disconnect").onclick = () => device && device.gatt.connected && device.gatt.disconnect();
 $("syncTime").onclick = () => write("time", String(Math.floor(Date.now() / 1000)), "time sync");
 $("cr").onclick = () => write("command", "event:cr", "continuing resolution");
+$("demo").onclick = () => write("command", "demo:start", "demo");
 $("wifiSave").onclick = (e) => {
   const ssid = $("wifiSsid").value, pass = $("wifiPass").value;
   if (!ssid || ssid.length > 32) { log("wifi: enter a network name (up to 32 characters)"); return; }
