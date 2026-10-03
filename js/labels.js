@@ -39,6 +39,7 @@ export const STATS = [
   ["crs_survived", "Continuing resolutions"],
   ["furlough_days", "Furlough days"],
   ["ghost_visits", "Ghost visits"],
+  ["vip_visits", "VIP visits"],
   ["data_calls", "Requests answered"],
   ["dashboards", "Reports built"],
   ["slides", "Slide decks"],

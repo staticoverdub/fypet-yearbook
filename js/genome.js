@@ -4,7 +4,9 @@ export const GENES = [
   ["pattern", 2], ["tail", 2], ["detailSeed", 16], ["temperament", 2], ["energy", 3], ["fidget", 3],
   ["favSpot", 3], ["hobbyPrimary", 5], ["hobbySecondary", 5], ["hobbyRecessive", 5], ["nameSeed", 10],
   ["shiny", 1],  // SPEC 9.10
+  ["mythicId", 3],  // D-091: 0 none, 1-5 mythic characters, 6-7 reserved (rejected)
 ];
+export const MYTHIC_COUNT = 5;
 const ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 export const HOBBY_POOL_SIZE = 20;
 
@@ -32,6 +34,7 @@ export function decodeGenome(text) {
     g[name] = v;
   }
   for (; pos < 80; pos++) if (bits[pos]) return null;
+  if (g.mythicId > MYTHIC_COUNT) return null;
   return g;
 }
 

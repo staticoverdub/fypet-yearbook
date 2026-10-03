@@ -2,6 +2,8 @@
 // mapped through the master palette (js/palette.js), so a creature looks identical on the site and the screen.
 import { PALETTE_HEX } from "./palette.js";
 import { generateSprite, spritePalette, SPRITE_SIZE } from "./sprite.js";
+import { MYTHICS } from "./mythics.js";
+import { TIERS } from "./rarity.js";
 
 const N = SPRITE_SIZE;
 const RGB = PALETTE_HEX.map((h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]);
@@ -62,5 +64,58 @@ export function drawEgg(ctx, genome, x, y, scale, wobble = 0) {
       ctx.fillStyle = PALETTE_HEX[idx];
       ctx.fillRect(x + (16 + i + wobble) * scale, y + (30 - H + j) * scale, scale, scale);
     }
+  }
+}
+
+// ---- Mythics (D-091) ----
+// A mythic renders from its drawing only when that person said yes (public_ok); otherwise a solid crimson silhouette
+// from the alpha mask in assets/mythic_masks.json (keyed by id: no names reach the site).
+
+let masks = null;
+const images = {};
+export async function prepareMythics() {
+  if (!masks) {
+    try { masks = await (await fetch("assets/mythic_masks.json", { cache: "no-cache" })).json(); } catch { masks = {}; }
+  }
+  await Promise.all(MYTHICS.filter((m) => m.public_ok && m.sprites).flatMap((m) => ["hatchling", "adult"].map((st) =>
+    new Promise((res) => {
+      const i = new Image();
+      i.onload = () => { images[`${m.id}:${st}`] = i; res(); };
+      i.onerror = () => res();
+      i.src = `assets/${m.sprites[st]}`;
+    }))));
+}
+
+export const mythicInfo = (id) => MYTHICS.find((m) => m.id === id) || null;
+
+// Q1 uses the hatchling drawing, Q2 on the adult (same rule as core::mythicUsesHatchling).
+export function makeMythic(genome, stage) {
+  const st = stage === "hatchling" || stage === "egg" ? "hatchling" : "adult";
+  const m = mythicInfo(genome.mythicId);
+  return { mythic: true, id: genome.mythicId, st, image: images[`${genome.mythicId}:${st}`] || null,
+           mask: masks?.[String(genome.mythicId)]?.[st] || null, publicOk: !!m?.public_ok };
+}
+
+const CRIMSON = PALETTE_HEX[TIERS.find((t) => t.id === "mythic").color];
+const GOLD = PALETTE_HEX[TIERS.find((t) => t.id === "legendary").color];
+
+// Bottom-centered in a box `boxW` x `boxH` art px at (x, y) canvas px.
+export function drawMythic(ctx, m, frame, x, y, scale, boxW = 32, boxH = 32, now = 0) {
+  const w = m.image ? m.image.width : m.mask?.w || 0, h = m.image ? m.image.height : m.mask?.h || 0;
+  if (!w) return;
+  const ox = x + Math.trunc((boxW - w) / 2) * scale, oy = y + (boxH - h) * scale + (frame.yOffset || 0) * scale;
+  ctx.imageSmoothingEnabled = false;
+  if (m.image) { ctx.drawImage(m.image, ox, oy, w * scale, h * scale); return; }
+  ctx.fillStyle = CRIMSON;
+  for (let r = 0; r < h; r++) {
+    const bits = parseInt(m.mask.rows[r], 16).toString(2).padStart(w, "0");
+    for (let c = 0; c < w; c++) if (bits[c] === "1") ctx.fillRect(ox + c * scale, oy + r * scale, scale, scale);
+  }
+  ctx.fillStyle = GOLD;  // eye glints (they blink), then a few gold sparkles
+  if (!frame.eyesClosed) for (const [ex, ey] of m.mask.eyes || []) ctx.fillRect(ox + ex * scale, oy + ey * scale, scale, scale);
+  for (let i = 0; i < 3; i++) {
+    const k = (Math.trunc(now / 300) * 7 + i * 13) % (w * h);
+    const sx = k % w, sy = Math.trunc(k / w);
+    ctx.fillRect(ox + sx * scale, oy + sy * scale, scale, scale);
   }
 }
