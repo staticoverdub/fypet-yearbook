@@ -116,7 +116,7 @@ async function main() {
   await prepareMythics();
   const genome = decodeGenome(pet.genome);
   const name = [pet.given, pet.surname, pet.numeral].filter(Boolean).join(" ");
-  document.title = `${name} | FYPet`;
+  document.title = `${name} | FYDO`;
   app.replaceChildren();
   if (await isDebug()) app.append(el("p", "devnote", "Development pet (data-debug)."));
   app.append(el("h1", null, name));

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FYPet Control</title>
+  <title>FYDO Control</title>
   <link rel="stylesheet" href="style.css">
   <style>
     .ctl { max-width: 30rem; margin: 0 auto; }
@@ -24,7 +24,7 @@
 </head>
 <body>
 <main class="ctl">
-  <h1>FYPet Control</h1>
+  <h1>FYDO Control</h1>
   <p class="sub">Bluetooth control for the desk pet. Chrome on desktop or Android; on iPhone use the Bluefy browser.</p>
 
   <p id="unsupported" class="warn" hidden>This browser has no Web Bluetooth. Try Chrome (desktop or Android) or Bluefy (iPhone).</p>
@@ -98,7 +98,7 @@ function setConnected(on) {
 
 async function connect() {
   try {
-    device = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: "FYPet-" }, { services: [SERVICE] }], optionalServices: [SERVICE] });
+    device = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: "FYDO-" }, { namePrefix: "FYPet-" }, { services: [SERVICE] }], optionalServices: [SERVICE] });
     device.addEventListener("gattserverdisconnected", () => { log("disconnected"); chars = {}; setConnected(false); });
     log(`connecting to ${device.name}...`);
     const server = await device.gatt.connect();
