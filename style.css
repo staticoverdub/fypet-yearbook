@@ -27,8 +27,10 @@ h1, h2, h3 { line-height: 1.2; }
 .dynasty h2 { margin: 0 0 .2rem; }
 .dynasty .sub { color: var(--muted); margin: 0 0 1rem; font-size: .85rem; }
 .tree { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: .8rem; }
-.card { background: var(--card); border: 2px solid var(--line); border-radius: 8px; padding: .7rem; text-decoration: none; color: inherit; display: block; }
-.card:hover { border-color: var(--accent); }
+.card { background: var(--card); border: 10px solid transparent; border-image: url("assets/card_frame.png") 10 stretch;
+  image-rendering: pixelated; padding: .4rem; text-decoration: none; color: inherit; display: block; }
+.card:hover { filter: brightness(1.06); }
+.hallhead { display: block; width: 100%; max-width: 40rem; margin: 0 auto .8rem; height: auto; border-radius: 6px; }
 .card canvas { display: block; margin: 0 auto .4rem; width: 128px; height: 128px; }
 .card .name { font-weight: bold; }
 .card .meta { color: var(--muted); font-size: .8rem; }

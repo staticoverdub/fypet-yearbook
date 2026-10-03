@@ -119,6 +119,13 @@ async function main() {
   document.title = `${name} | FYDO`;
   app.replaceChildren();
   if (await isDebug()) app.append(el("p", "devnote", "Development pet (data-debug)."));
+  if (pet.died_at) {  // the memorial gallery strip over a deceased pet's page
+    const hh = el("img", "hallhead");
+    hh.src = "assets/hall_header.png";
+    hh.alt = "";
+    hh.onerror = () => hh.remove();
+    app.append(hh);
+  }
   app.append(el("h1", null, name));
   const mi = genome?.mythicId ? mythicInfo(genome.mythicId) : null;
   const hobby = mi ? mi.hobby_label : HOBBY_NAMES[pet.hobbies?.primary];
