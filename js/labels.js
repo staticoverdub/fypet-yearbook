@@ -46,10 +46,27 @@ export const STATS = [
   ["excel_crashes", "Spreadsheet crashes"],
   ["safety_briefs", "Safety briefings"],
   ["cmd_briefs", "Leadership briefings"],
+  ["inbox_zero_days", "Inbox-zero days"],
+  ["coffee_runs", "Coffee runs"],
+  ["desk_naps", "Naps at the desk"],
+  ["window_minutes", "Staring out the window", mins],
+  ["steps", "Steps around the office"],
+  ["printer_jams", "Printer jams witnessed"],
   ["midyear_rating", "Mid-year rating", (v) => RATINGS[v] || v],
   ["pats_total", "Pats received"],
   ["max_pats_day", "Most pats in a day"],
   ["days_dark", "Days unplugged"],
+];
+
+// Pay (D-135): integer cents in pet.json. [key, label, show-if-zero]
+export const usd = (c) => (c / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
+export const PAY = [
+  ["paychecks", "Paychecks", true, (v) => Number(v).toLocaleString()],
+  ["gross_cents", "Gross pay this year", true, usd],
+  ["net_cents", "Take-home", true, usd],
+  ["tsp_cents", "TSP balance", true, usd],
+  ["nest_egg_cents", "Nest egg (inherited)", false, usd],
+  ["missed_paydays", "Paychecks owed (shutdown)", false, (v) => Number(v).toLocaleString()],
 ];
 
 export const STAGE_LABEL = { egg: "Egg", hatchling: "Hatchling", juvenile: "Juvenile", adult: "Adult", elder: "Elder", deceased: "Deceased" };

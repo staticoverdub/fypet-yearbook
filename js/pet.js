@@ -5,7 +5,7 @@ import { makeCreature, drawCreature, drawEgg, prepareMythics, makeMythic, drawMy
 import { tierOf } from "./tier.js";
 import { Animator, loop } from "./anim.js";
 import { loadPet, loadDiary, fmtDate, isDebug, query } from "./data.js";
-import { MILESTONES, STATS, STAGE_LABEL } from "./labels.js";
+import { MILESTONES, PAY, STATS, STAGE_LABEL } from "./labels.js";
 
 const app = document.getElementById("app");
 const el = (tag, cls, text) => {
@@ -172,6 +172,27 @@ async function main() {
   }
   st.append(dl);
   app.append(st);
+
+  if (pet.pay) {  // D-135: a fictional LES, published live
+    const ps = el("section");
+    ps.append(el("h2", null, "Pay"));
+    const pdl = el("dl", "stats");
+    for (const [k, label, showZero, fmt] of PAY) {
+      const v = pet.pay[k];
+      if (v == null || (!showZero && !v)) continue;
+      const d = el("div");
+      d.append(el("dt", null, label), el("dd", null, fmt(v)));
+      pdl.append(d);
+    }
+    if (pet.pay.tsp_fund) {
+      const d = el("div");
+      d.append(el("dt", null, "TSP fund"), el("dd", null, pet.pay.tsp_fund));
+      pdl.append(d);
+    }
+    ps.append(pdl);
+    ps.append(el("p", "sub", "Grade-based pay, simplified deductions and a make-believe market. The TSP balance passes to the next egg."));
+    app.append(ps);
+  }
   app.append(await diarySection(board, pet));
   if (pet.updated) app.append(el("p", "sub", `Updated ${fmtDate(pet.updated)}`));
 }
