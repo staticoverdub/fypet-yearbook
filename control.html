@@ -137,6 +137,9 @@ async function connect() {
     chars.status.addEventListener("characteristicvaluechanged", (e) => showStatus(dec.decode(e.target.value)));
     log(chars.command ? "connected" : "connected (status only: this board has no passkey set)");
     setConnected(true);
+    // Send the phone's time straight away (D-126): a board running on an estimated clock after a power cut takes
+    // it as-is; a board already set by Wi-Fi or serial only accepts it within +/-10 min, so this is always safe.
+    if (chars.time) await write("time", String(Math.floor(Date.now() / 1000)), "time sync");
   } catch (e) {
     log(`connect failed: ${e.message}`);
   }
